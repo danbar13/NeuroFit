@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- רקע האייקון - כחול נגיש -->
+  <rect width="512" height="512" rx="112" fill="#4A90E2"/>
+  
+  <!-- קווי מתאר של מוח - לבן בוהק ועבה לקריאות מקסימלית -->
+  <path d="M256 120 C180 120, 130 170, 130 230 C130 260, 145 285, 160 305 C150 330, 140 360, 170 380 C200 400, 230 380, 256 360 C282 380, 312 400, 342 380 C372 360, 362 330, 352 305 C367 285, 382 260, 382 230 C382 170, 332 120, 256 120 Z" fill="none" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- חיבורים עצביים / ניצוצות מחשבתיים - צהוב בעל ניגודיות גבוהה -->
+  <circle cx="210" cy="220" r="18" fill="#FFD700" />
+  <circle cx="302" cy="220" r="18" fill="#FFD700" />
+  <circle cx="256" cy="285" r="18" fill="#FFD700" />
+  <path d="M210 220 L256 285 L302 220" fill="none" stroke="#FFD700" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -22,6 +22,7 @@ import {
 } from './lib/authStateService';
 import type { UserProfile, CognitiveProfile } from './types/database';
 import type { ExerciseCategory } from './types/exercise';
+import type { CalibrationSummary } from './lib/calibrationEngine';
 
 export type AppView =
   | 'auth'
@@ -89,14 +90,14 @@ export function App() {
   };
 
   // Handle baseline test completion
-  const handleBaselineCompleted = () => {
+  const handleBaselineCompleted = (summary?: CalibrationSummary) => {
     if (currentUser) {
       const initialProfile: CognitiveProfile = {
         user_id: currentUser.user_id,
-        memory_level: 2,
-        attention_level: 2,
-        speed_level: 2,
-        language_level: 2,
+        memory_level: summary?.memoryLevel ?? 2,
+        attention_level: summary?.attentionLevel ?? 2,
+        speed_level: summary?.speedLevel ?? 2,
+        language_level: summary?.languageLevel ?? 2,
         baseline_completed: true,
         last_assessed_at: new Date().toISOString(),
       };
@@ -114,7 +115,7 @@ export function App() {
 
   return (
     <AccessibilityProvider>
-      <GamificationProvider>
+      <GamificationProvider currentUser={currentUser}>
         <div className="min-h-screen w-full flex flex-col font-sans transition-colors duration-150">
           {/* 1. Unauthenticated Gate */}
           {(!currentUser || currentView === 'auth') && (
@@ -124,6 +125,7 @@ export function App() {
           {/* 2. Mandatory Baseline Assessment Gate */}
           {currentUser && currentView === 'baseline_test' && (
             <BaselineFlow
+              currentUser={currentUser}
               onComplete={handleBaselineCompleted}
               onExit={() => {
                 // If user hasn't completed baseline, they stay or go back to auth
@@ -140,6 +142,7 @@ export function App() {
           {/* 3. Main Dashboard & Gated Views */}
           {currentUser && currentView === 'home' && (
             <HomeDashboard
+              currentUser={currentUser}
               onStartDailyWorkout={() => setCurrentView('daily_workout')}
               onStartBaseline={() => setCurrentView('baseline_test')}
               onOpenCatalog={() => setCurrentView('game_catalog')}
@@ -192,6 +195,7 @@ export function App() {
 
           {currentUser && currentView === 'daily_workout' && (
             <DailyWorkoutManager
+              currentUser={currentUser}
               onReturnToHome={() => setCurrentView('home')}
               onOpenFamilyDashboard={() => setCurrentView('family_dashboard')}
             />
@@ -199,6 +203,7 @@ export function App() {
 
           {currentUser && currentView === 'family_dashboard' && (
             <FamilyDashboardScreen
+              currentUser={currentUser}
               onReturnToHome={() => setCurrentView('home')}
               onStartDailyWorkout={() => setCurrentView('daily_workout')}
             />
@@ -206,6 +211,7 @@ export function App() {
 
           {currentUser && currentView === 'user_dashboard' && (
             <UserDashboardScreen
+              currentUser={currentUser}
               onReturnToHome={() => setCurrentView('home')}
               onStartDailyWorkout={() => setCurrentView('daily_workout')}
               onOpenFamilyDashboard={() => setCurrentView('family_dashboard')}
@@ -215,6 +221,7 @@ export function App() {
 
           {currentUser && currentView === 'settings' && (
             <SettingsScreen
+              currentUser={currentUser}
               onReturnToHome={() => setCurrentView('home')}
               onLogout={handleLogout}
             />

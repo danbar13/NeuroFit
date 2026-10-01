@@ -8,7 +8,7 @@ import { CoinRewardModal } from '../gamification/CoinRewardModal';
 import { BadgeUnlockedModal } from '../gamification/BadgeUnlockedModal';
 import { NotificationToast } from '../gamification/NotificationToast';
 import { getStoredCognitiveProfile } from '../../lib/workoutService';
-import type { CognitiveProfile } from '../../types/database';
+import type { CognitiveProfile, UserProfile } from '../../types/database';
 import {
   Play,
   Brain,
@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 
 interface HomeDashboardProps {
+  currentUser?: UserProfile | null;
   onStartDailyWorkout: () => void;
   onStartBaseline: () => void;
   onOpenCatalog?: () => void;
@@ -37,6 +38,7 @@ interface HomeDashboardProps {
 }
 
 export const HomeDashboard: React.FC<HomeDashboardProps> = ({
+  currentUser,
   onStartDailyWorkout,
   onStartBaseline,
   onOpenCatalog,
@@ -111,7 +113,9 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               <span>{language === 'he' ? 'אימון מוח מותאם אישית' : 'Personalized Cognitive Fitness'}</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-              {language === 'he' ? 'שלום, סבתא שרה!' : 'Welcome, Grandma Sarah!'}
+              {language === 'he'
+                ? `שלום, ${currentUser?.display_name || 'מתאמן יקר'}!`
+                : `Welcome, ${currentUser?.display_name || 'Trainee'}!`}
             </h1>
             <p
               className={`text-lg sm:text-xl font-medium mt-1 ${

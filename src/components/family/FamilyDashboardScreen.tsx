@@ -19,13 +19,16 @@ import {
   BellRing,
   Play,
 } from 'lucide-react';
+import type { UserProfile } from '../../types/database';
 
 interface FamilyDashboardScreenProps {
+  currentUser?: UserProfile | null;
   onReturnToHome: () => void;
   onStartDailyWorkout?: () => void;
 }
 
 export const FamilyDashboardScreen: React.FC<FamilyDashboardScreenProps> = ({
+  currentUser,
   onReturnToHome,
   onStartDailyWorkout,
 }) => {
@@ -181,7 +184,10 @@ export const FamilyDashboardScreen: React.FC<FamilyDashboardScreenProps> = ({
             <CoopWeeklyGoal members={familyMembers} targetWeeklyCoins={2000} />
 
             {/* Requirement 2 & 3: Consistency Leaderboard & Micro-Interactions */}
-            <ConsistencyLeaderboard members={familyMembers} currentUserId="user_sarah" />
+            <ConsistencyLeaderboard
+              members={familyMembers}
+              currentUserId={currentUser?.user_id || 'user_sarah'}
+            />
 
             {/* Requirement 3: Receiver Simulation / Testing Card */}
             <div

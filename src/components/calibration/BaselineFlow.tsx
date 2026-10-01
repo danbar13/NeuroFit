@@ -15,22 +15,24 @@ import { CoinRewardModal } from '../gamification/CoinRewardModal';
 import { BadgeUnlockedModal } from '../gamification/BadgeUnlockedModal';
 import { NotificationToast } from '../gamification/NotificationToast';
 import { baselineContentMatrix } from '../../data/baselineContentMatrix';
+import { saveCognitiveProfile } from '../../lib/authStateService';
 import type { ExerciseCategory, ScientificRationaleInfo } from '../../types/exercise';
+import type { UserProfile } from '../../types/database';
 
 type CalibrationStage = 'intro' | 'test1' | 'test2' | 'test3' | 'test4' | 'results';
 
 interface BaselineFlowProps {
-  onComplete?: () => void;
+  currentUser?: UserProfile | null;
+  onComplete?: (summary?: CalibrationSummary) => void;
   onExit?: () => void;
 }
 
-export const BaselineFlow: React.FC<BaselineFlowProps> = ({ onComplete, onExit }) => {
+export const BaselineFlow: React.FC<BaselineFlowProps> = ({ currentUser, onComplete, onExit }) => {
   const { theme, highContrast, language, t } = useAccessibility();
   const {
     lastSessionReward,
     newlyUnlockedBadge,
     activeNotification,
-    completeDailyWorkout,
     dismissNotification,
     dismissRewardModal,
     dismissBadgeModal,
@@ -145,6 +147,17 @@ export const BaselineFlow: React.FC<BaselineFlowProps> = ({ onComplete, onExit }
       // Calculate calibration results with hidden algorithm
       const summary = computeCalibrationResults(testMetrics);
       setCalibrationSummary(summary);
+      if (currentUser) {
+        saveCognitiveProfile({
+          user_id: currentUser.user_id,
+          memory_level: summary.memoryLevel,
+          attention_level: summary.attentionLevel,
+          speed_level: summary.speedLevel,
+          language_level: summary.languageLevel,
+          baseline_completed: true,
+          last_assessed_at: new Date().toISOString(),
+        });
+      }
       setStage('results');
     }
   };
@@ -238,8 +251,7 @@ export const BaselineFlow: React.FC<BaselineFlowProps> = ({ onComplete, onExit }
           <CalibrationResults
             summary={calibrationSummary}
             onProceedToDaily={() => {
-              completeDailyWorkout();
-              onComplete?.();
+              onComplete?.(calibrationSummary);
             }}
             onRecalibrate={handleRecalibrate}
           />

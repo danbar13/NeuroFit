@@ -23,9 +23,10 @@ import {
   type WorkoutCompletionResult,
 } from '../../lib/workoutService';
 import type { ExerciseCategory, ScientificRationaleInfo } from '../../types/exercise';
-import type { CognitiveProfile } from '../../types/database';
+import type { CognitiveProfile, UserProfile } from '../../types/database';
 
 interface DailyWorkoutManagerProps {
+  currentUser?: UserProfile | null;
   onReturnToHome: () => void;
   onOpenFamilyDashboard?: () => void;
 }
@@ -41,6 +42,7 @@ type WorkoutFlowState =
   | 'summary';
 
 export const DailyWorkoutManager: React.FC<DailyWorkoutManagerProps> = ({
+  currentUser,
   onReturnToHome,
   onOpenFamilyDashboard,
 }) => {
@@ -56,7 +58,7 @@ export const DailyWorkoutManager: React.FC<DailyWorkoutManagerProps> = ({
   } = useGamification();
 
   // 1. Initial State & Profile
-  const [profile, setProfile] = useState<CognitiveProfile>(getStoredCognitiveProfile);
+  const [profile, setProfile] = useState<CognitiveProfile>(() => getStoredCognitiveProfile(currentUser?.user_id));
   const [flowState, setFlowState] = useState<WorkoutFlowState>('ex1_memory');
   const [hasCompletedFeedback, setHasCompletedFeedback] = useState<boolean>(false);
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseSessionLogItem[]>([]);
@@ -71,11 +73,11 @@ export const DailyWorkoutManager: React.FC<DailyWorkoutManagerProps> = ({
   // Duration tracking
   const sessionStartTimeRef = useRef<number>(Date.now());
 
-  // Reload profile on mount
+  // Reload profile on mount or currentUser change
   useEffect(() => {
-    setProfile(getStoredCognitiveProfile());
+    setProfile(getStoredCognitiveProfile(currentUser?.user_id));
     sessionStartTimeRef.current = Date.now();
-  }, []);
+  }, [currentUser?.user_id]);
 
   // Feedback recording from an active exercise
   const handleFeedback = (category: ExerciseCategory, isCorrect: boolean, responseTimeMs: number) => {
@@ -208,8 +210,8 @@ export const DailyWorkoutManager: React.FC<DailyWorkoutManagerProps> = ({
   const finalizeWorkoutSession = () => {
     const durationSeconds = Math.round((Date.now() - sessionStartTimeRef.current) / 1000);
 
-    // 1. Process DDA, DB logs, and save profile
-    const result = completeDailyWorkoutSession(exerciseLogs, profile.user_id, durationSeconds);
+    const activeUserId = currentUser?.user_id || profile.user_id || 'user_sarah';
+    const result = completeDailyWorkoutSession(exerciseLogs, activeUserId, durationSeconds);
     setWorkoutResult(result);
     setProfile(result.updatedProfile);
 

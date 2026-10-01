@@ -7,7 +7,7 @@ import {
   calculateSessionCompletionRewards,
   canSendEncouragement,
 } from '../lib/gamificationEngine';
-import type { UserBadge, FamilyNotification } from '../types/database';
+import type { UserBadge, FamilyNotification, UserProfile } from '../types/database';
 import { audioManager } from '../lib/soundEffects';
 import { evaluateBadges } from '../lib/badgeEvaluation';
 
@@ -27,9 +27,9 @@ interface GamificationContextType {
   dismissBadgeModal: () => void;
 }
 
-const STORAGE_KEY = 'neurofit_gamification_state_v1';
+const getStorageKey = (userId?: string) => `neurofit_gamification_${userId || 'guest'}_v2`;
 
-const INITIAL_FAMILY: FamilyMemberStats[] = [
+const INITIAL_SARAH_FAMILY: FamilyMemberStats[] = [
   {
     user_id: 'user_david',
     display_name: 'סבא דוד',
@@ -72,48 +72,122 @@ const INITIAL_FAMILY: FamilyMemberStats[] = [
   },
 ];
 
-const GamificationContext = createContext<GamificationContextType | undefined>(undefined);
+const INITIAL_SARAH_BADGES: UserBadge[] = [
+  {
+    user_id: 'user_sarah',
+    badge_id: 'early_bird',
+    badge_name: 'משכים קום',
+    badge_description: 'השלמת אימון יומי לפני השעה 09:00 בבוקר',
+    icon_name: 'Sun',
+    awarded_at: new Date(Date.now() - 86400000).toISOString(),
+  },
+];
 
-export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [totalCoins, setTotalCoins] = useState<number>(340);
-  const [currentStreak, setCurrentStreak] = useState<number>(6);
-  const [familyMembers, setFamilyMembers] = useState<FamilyMemberStats[]>(INITIAL_FAMILY);
-  const [userBadges, setUserBadges] = useState<UserBadge[]>([
+const getInitialFamilyForUser = (user?: UserProfile | null): FamilyMemberStats[] => {
+  if (!user || user.user_id === 'user_sarah') {
+    return INITIAL_SARAH_FAMILY;
+  }
+  const myName = user.display_name ? `${user.display_name} (את/ה)` : 'אני (את/ה)';
+  return [
+    {
+      user_id: 'user_david',
+      display_name: 'סבא דוד',
+      current_streak: 12,
+      weekly_coins: 380,
+      total_coins: 720,
+      avatar_color: 'bg-indigo-600',
+    },
+    {
+      user_id: user.user_id,
+      display_name: myName,
+      current_streak: 0,
+      weekly_coins: 0,
+      total_coins: 50,
+      avatar_color: 'bg-emerald-600',
+    },
     {
       user_id: 'user_sarah',
-      badge_id: 'early_bird',
-      badge_name: 'משכים קום',
-      badge_description: 'השלמת אימון יומי לפני השעה 09:00 בבוקר',
-      icon_name: 'Sun',
-      awarded_at: new Date(Date.now() - 86400000).toISOString(),
+      display_name: 'סבתא שרה',
+      current_streak: 6,
+      weekly_coins: 250,
+      total_coins: 340,
+      avatar_color: 'bg-purple-600',
     },
-  ]);
+    {
+      user_id: 'user_roni',
+      display_name: 'רוני (בת)',
+      current_streak: 4,
+      weekly_coins: 160,
+      total_coins: 290,
+      avatar_color: 'bg-teal-600',
+    },
+    {
+      user_id: 'user_yonatan',
+      display_name: 'יונתן (נכד)',
+      current_streak: 3,
+      weekly_coins: 140,
+      total_coins: 210,
+      avatar_color: 'bg-amber-600',
+    },
+  ];
+};
+
+const GamificationContext = createContext<GamificationContextType | undefined>(undefined);
+
+interface GamificationProviderProps {
+  children: React.ReactNode;
+  currentUser?: UserProfile | null;
+}
+
+export const GamificationProvider: React.FC<GamificationProviderProps> = ({ children, currentUser }) => {
+  const isSarah = !currentUser || currentUser.user_id === 'user_sarah';
+
+  const [totalCoins, setTotalCoins] = useState<number>(isSarah ? 340 : 50);
+  const [currentStreak, setCurrentStreak] = useState<number>(isSarah ? 6 : 0);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMemberStats[]>(() => getInitialFamilyForUser(currentUser));
+  const [userBadges, setUserBadges] = useState<UserBadge[]>(() => (isSarah ? INITIAL_SARAH_BADGES : []));
 
   const [activeNotification, setActiveNotification] = useState<FamilyNotification | null>(null);
   const [lastSessionReward, setLastSessionReward] = useState<SessionRewardResult | null>(null);
   const [newlyUnlockedBadge, setNewlyUnlockedBadge] = useState<UserBadge | null>(null);
 
-  // Load from local storage
+  // Load from local storage when currentUser changes or mounts
   useEffect(() => {
+    const key = getStorageKey(currentUser?.user_id);
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(key);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (typeof parsed.totalCoins === 'number') setTotalCoins(parsed.totalCoins);
         if (typeof parsed.currentStreak === 'number') setCurrentStreak(parsed.currentStreak);
         if (Array.isArray(parsed.familyMembers)) setFamilyMembers(parsed.familyMembers);
         if (Array.isArray(parsed.userBadges)) setUserBadges(parsed.userBadges);
+        return;
       }
     } catch {
       // fallback
     }
-  }, []);
+
+    // Default initialization if nothing saved yet
+    if (isSarah) {
+      setTotalCoins(340);
+      setCurrentStreak(6);
+      setFamilyMembers(INITIAL_SARAH_FAMILY);
+      setUserBadges(INITIAL_SARAH_BADGES);
+    } else {
+      setTotalCoins(50);
+      setCurrentStreak(0);
+      setFamilyMembers(getInitialFamilyForUser(currentUser));
+      setUserBadges([]);
+    }
+  }, [currentUser?.user_id]);
 
   // Save to local storage
   useEffect(() => {
+    if (!currentUser) return;
     try {
       localStorage.setItem(
-        STORAGE_KEY,
+        getStorageKey(currentUser?.user_id),
         JSON.stringify({
           totalCoins,
           currentStreak,
@@ -124,10 +198,11 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch {
       // ignore
     }
-  }, [totalCoins, currentStreak, familyMembers, userBadges]);
+  }, [totalCoins, currentStreak, familyMembers, userBadges, currentUser?.user_id]);
 
-  // Ticket G-1 & G-5: Complete Daily Workout
+  // Complete Daily Workout
   const completeDailyWorkout = (): SessionRewardResult => {
+    const activeUserId = currentUser?.user_id || 'user_sarah';
     const existingBadgeIds = userBadges.map((b) => b.badge_id);
 
     const result = calculateSessionCompletionRewards({
@@ -141,10 +216,10 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setTotalCoins(result.newTotalCoins);
     setCurrentStreak(result.newStreak);
 
-    // Update Sarah in family list
+    // Update active user in family list
     setFamilyMembers((prev) =>
       prev.map((member) =>
-        member.user_id === 'user_sarah'
+        member.user_id === activeUserId
           ? {
               ...member,
               current_streak: result.newStreak,
@@ -156,11 +231,11 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     );
 
     // Evaluate behavioral badges via BadgeEvaluationLogic
-    const badgeEval = evaluateBadges('user_sarah', {
+    const badgeEval = evaluateBadges(activeUserId, {
       completed_at: new Date(),
       current_streak: result.newStreak,
       completedCategories: ['memory', 'attention', 'speed', 'language'],
-      totalSessionsCount: 7,
+      totalSessionsCount: currentStreak + 1,
       existingBadgeIds,
     });
 
@@ -188,7 +263,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
   };
 
-  // Ticket G-4: Send Encouragement (Applause 👏 or Heart ❤️)
+  // Send Encouragement (Applause 👏 or Heart ❤️)
   const sendEncouragementToMember = (
     memberId: string,
     reactionType: 'clap' | 'heart' = 'clap'
@@ -228,7 +303,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const notif: FamilyNotification = {
       notification_id: `notif_${now}`,
       from_user_id: 'user_david',
-      to_user_id: 'user_sarah',
+      to_user_id: currentUser?.user_id || 'user_sarah',
       sender_name: senderName,
       message: `${senderName} שלח/ה לך עידוד חם! ${icon} גאים בך מאוד!`,
       notification_type: 'encouragement',

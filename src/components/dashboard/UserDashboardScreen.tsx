@@ -5,7 +5,7 @@ import { ExerciseHeader } from '../exercise/ExerciseHeader';
 import { AccessibilityModal } from '../accessibility/AccessibilityModal';
 import { BadgeGallery } from './BadgeGallery';
 import { getStoredCognitiveProfile } from '../../lib/workoutService';
-import type { CognitiveProfile } from '../../types/database';
+import type { CognitiveProfile, UserProfile } from '../../types/database';
 import {
   Flame,
   CalendarCheck,
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 
 interface UserDashboardScreenProps {
+  currentUser?: UserProfile | null;
   onReturnToHome: () => void;
   onStartDailyWorkout?: () => void;
   onOpenFamilyDashboard?: () => void;
@@ -28,6 +29,7 @@ interface UserDashboardScreenProps {
 }
 
 export const UserDashboardScreen: React.FC<UserDashboardScreenProps> = ({
+  currentUser,
   onReturnToHome,
   onStartDailyWorkout,
   onOpenFamilyDashboard,
@@ -36,15 +38,16 @@ export const UserDashboardScreen: React.FC<UserDashboardScreenProps> = ({
   const { theme, highContrast, language } = useAccessibility();
   const { totalCoins, currentStreak, userBadges } = useGamification();
 
-  const [profile, setProfile] = useState<CognitiveProfile>(getStoredCognitiveProfile);
+  const [profile, setProfile] = useState<CognitiveProfile>(() => getStoredCognitiveProfile(currentUser?.user_id));
   const [isAccessibilityOpen, setIsAccessibilityOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    setProfile(getStoredCognitiveProfile());
-  }, []);
+    setProfile(getStoredCognitiveProfile(currentUser?.user_id));
+  }, [currentUser?.user_id]);
 
   const isRtl = language === 'he';
-  const displayName = language === 'he' ? 'סבתא שרה' : 'Grandma Sarah';
+  const displayName = currentUser?.display_name || (language === 'he' ? 'מתאמן יקר' : 'Trainee');
+  const avatarLetter = (displayName.trim()[0] || 'מ').toUpperCase();
 
   return (
     <div
@@ -89,7 +92,7 @@ export const UserDashboardScreen: React.FC<UserDashboardScreenProps> = ({
                   : 'bg-gradient-to-tr from-emerald-500 to-teal-600'
               }`}
             >
-              ש
+              {avatarLetter}
             </div>
 
             <div className="min-w-0">

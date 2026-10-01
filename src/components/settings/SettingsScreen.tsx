@@ -27,11 +27,13 @@ import {
 } from 'lucide-react';
 
 interface SettingsScreenProps {
+  currentUser?: UserProfile | null;
   onReturnToHome: () => void;
   onLogout?: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
+  currentUser,
   onReturnToHome,
   onLogout,
 }) => {
@@ -72,10 +74,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   // Load profile and family data on mount
   useEffect(() => {
     const loadData = async () => {
-      const p = await settingsService.getUserProfile('user_sarah');
+      const activeUserId = currentUser?.user_id || 'user_sarah';
+      const p = await settingsService.getUserProfile(activeUserId);
       setProfile(p);
-      setDisplayName(p.display_name || '');
-      setBirthYear(p.birth_year ? p.birth_year.toString() : '');
+      setDisplayName(currentUser?.display_name || p.display_name || '');
+      setBirthYear(currentUser?.birth_year ? currentUser.birth_year.toString() : p.birth_year ? p.birth_year.toString() : '');
 
       if (p.family_group_id) {
         const f = await settingsService.getFamilyGroupById(p.family_group_id);
@@ -83,7 +86,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       }
     };
     loadData();
-  }, []);
+  }, [currentUser]);
 
   // Handle Profile Update
   const handleSaveProfile = async (e: React.FormEvent) => {

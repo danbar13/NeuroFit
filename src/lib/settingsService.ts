@@ -55,24 +55,45 @@ export const DEFAULT_USER_PROFILE: UserProfile = {
 // --------------------------------------------------------------------------
 // Storage Helpers
 // --------------------------------------------------------------------------
-function getStoredProfile(): UserProfile {
+function getStoredProfile(userId?: string): UserProfile {
   try {
+    if (userId) {
+      const perUserRaw = localStorage.getItem(`${USER_PROFILE_STORAGE_KEY}_${userId}`);
+      if (perUserRaw) {
+        const parsed = JSON.parse(perUserRaw);
+        if (parsed && parsed.user_id) {
+          return parsed;
+        }
+      }
+    }
+    const rawAuth = localStorage.getItem('neurofit_auth_user_v2');
+    if (rawAuth) {
+      const parsed = JSON.parse(rawAuth);
+      if (parsed && (!userId || parsed.user_id === userId)) {
+        return parsed;
+      }
+    }
     const raw = localStorage.getItem(USER_PROFILE_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.user_id) {
+      if (parsed && parsed.user_id && (!userId || parsed.user_id === userId)) {
         return parsed;
       }
     }
   } catch {
     // fallback
   }
-  return { ...DEFAULT_USER_PROFILE };
+  return {
+    ...DEFAULT_USER_PROFILE,
+    user_id: userId || DEFAULT_USER_PROFILE.user_id,
+  };
 }
 
 function saveStoredProfile(profile: UserProfile): void {
   try {
     localStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(profile));
+    localStorage.setItem(`${USER_PROFILE_STORAGE_KEY}_${profile.user_id}`, JSON.stringify(profile));
+    localStorage.setItem('neurofit_auth_user_v2', JSON.stringify(profile));
   } catch {
     // ignore
   }
@@ -116,7 +137,7 @@ export const settingsService = {
         console.warn('Supabase profile fetch failed, using local fallback:', err);
       }
     }
-    return getStoredProfile();
+    return getStoredProfile(userId);
   },
 
   /**

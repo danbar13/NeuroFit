@@ -1,6 +1,10 @@
 import type { CognitiveProfile, DailySession, ExerciseLog } from '../types/database';
 import type { ExerciseCategory } from '../types/exercise';
 import { evaluateDDA, type DDAResult } from './ddaEngine';
+import {
+  getCognitiveProfile as getAuthCognitiveProfile,
+  saveCognitiveProfile as saveAuthCognitiveProfile,
+} from './authStateService';
 
 const COGNITIVE_PROFILE_KEY = 'neurofit_cognitive_profile_v1';
 const DAILY_SESSIONS_KEY = 'neurofit_daily_sessions_v1';
@@ -34,19 +38,59 @@ export interface WorkoutCompletionResult {
 /**
  * Loads current user's cognitive profile from local storage (or fallback default).
  */
-export function getStoredCognitiveProfile(): CognitiveProfile {
+export function getStoredCognitiveProfile(userId?: string): CognitiveProfile {
+  // 1. Try auth-scoped profile if userId provided
+  if (userId) {
+    const authProfile = getAuthCognitiveProfile(userId);
+    if (authProfile) {
+      return authProfile;
+    }
+  }
+
+  // 2. Try looking up current user from auth state
   try {
-    const raw = localStorage.getItem(COGNITIVE_PROFILE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed.memory_level === 'number') {
-        return parsed;
+    const rawUser = localStorage.getItem('neurofit_auth_user_v2');
+    if (rawUser) {
+      const parsedUser = JSON.parse(rawUser);
+      if (parsedUser?.user_id && (!userId || parsedUser.user_id === userId)) {
+        const authProfile = getAuthCognitiveProfile(parsedUser.user_id);
+        if (authProfile) {
+          return authProfile;
+        }
+        return {
+          user_id: parsedUser.user_id,
+          memory_level: 2,
+          attention_level: 2,
+          speed_level: 2,
+          language_level: 2,
+          baseline_completed: false,
+          last_assessed_at: '',
+        };
       }
     }
   } catch {
     // Ignore parse error
   }
-  return DEFAULT_COGNITIVE_PROFILE;
+
+  // 3. Fallback to v1 legacy profile
+  try {
+    const raw = localStorage.getItem(COGNITIVE_PROFILE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.memory_level === 'number') {
+        if (!userId || parsed.user_id === userId) {
+          return parsed;
+        }
+      }
+    }
+  } catch {
+    // Ignore parse error
+  }
+
+  return {
+    ...DEFAULT_COGNITIVE_PROFILE,
+    user_id: userId || DEFAULT_COGNITIVE_PROFILE.user_id,
+  };
 }
 
 /**
@@ -55,6 +99,7 @@ export function getStoredCognitiveProfile(): CognitiveProfile {
 export function saveCognitiveProfile(profile: CognitiveProfile): void {
   try {
     localStorage.setItem(COGNITIVE_PROFILE_KEY, JSON.stringify(profile));
+    saveAuthCognitiveProfile(profile);
   } catch {
     // Ignore storage error
   }
@@ -72,7 +117,7 @@ export function completeDailyWorkoutSession(
   userId: string = 'user_sarah',
   durationSeconds: number = 180
 ): WorkoutCompletionResult {
-  const previousProfile = getStoredCognitiveProfile();
+  const previousProfile = getStoredCognitiveProfile(userId);
   const sessionId = `session_${Date.now()}`;
   const nowIso = new Date().toISOString();
 

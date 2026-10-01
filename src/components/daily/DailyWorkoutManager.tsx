@@ -250,7 +250,7 @@ export const DailyWorkoutManager: React.FC<DailyWorkoutManagerProps> = ({
 
       {/* 2. MAIN INTERACTION AREA */}
       <main
-        className="flex-1 flex flex-col items-center justify-center px-4 py-4 sm:py-6 max-w-4xl w-full mx-auto"
+        className="flex-1 flex flex-col items-center justify-center px-4 py-4 sm:py-6 pb-24 sm:pb-28 max-w-4xl w-full mx-auto"
         role="main"
       >
         {/* Exercise 1: Memory */}

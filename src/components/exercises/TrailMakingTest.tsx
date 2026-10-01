@@ -209,7 +209,7 @@ export const TrailMakingTest: React.FC<TrailMakingProps> = ({
 
       {/* 2D Canvas Area */}
       <div
-        className={`relative w-full h-88 sm:h-104 rounded-3xl border-4 shadow-xl overflow-hidden transition-all ${
+        className={`relative w-full h-[420px] sm:h-[480px] min-h-[360px] rounded-3xl border-4 shadow-xl overflow-hidden transition-all select-none ${
           highContrast
             ? 'bg-black border-yellow-400'
             : theme === 'dark'

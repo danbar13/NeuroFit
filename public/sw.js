@@ -1,8 +1,6 @@
-// Service Worker for NeuroFit PWA
-const CACHE_NAME = 'neurofit-cache-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
+// Service Worker for NeuroFit PWA - Network-First for HTML to prevent stale chunk 404
+const CACHE_NAME = 'neurofit-cache-v2';
+const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.svg',
   '/icons/icon.svg',
@@ -13,7 +11,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(STATIC_ASSETS);
     })
   );
   self.skipWaiting();
@@ -35,9 +33,18 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
+  // Network-First for navigation (HTML documents) to ensure newest version is always served
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => caches.match(event.request).then((res) => res || caches.match('/')))
+    );
+    return;
+  }
+
+  // Cache-First with Network fallback for static assets
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -45,11 +52,6 @@ self.addEventListener('fetch', (event) => {
       }
       return fetch(event.request).then((networkResponse) => {
         return networkResponse;
-      }).catch(() => {
-        // Fallback for HTML navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/');
-        }
       });
     })
   );

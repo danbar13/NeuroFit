@@ -174,6 +174,23 @@ export const BaselineFlow: React.FC<BaselineFlowProps> = ({ currentUser, onCompl
     setStage('intro');
   };
 
+  const handleSkipBaseline = () => {
+    if (currentUser) {
+      saveCognitiveProfile({
+        user_id: currentUser.user_id,
+        memory_level: 2,
+        attention_level: 2,
+        speed_level: 2,
+        language_level: 2,
+        baseline_completed: true,
+        last_assessed_at: new Date().toISOString(),
+      });
+    }
+    if (onComplete) {
+      onComplete();
+    }
+  };
+
   const isTestingStage = stage === 'test1' || stage === 'test2' || stage === 'test3' || stage === 'test4';
 
   return (
@@ -192,7 +209,7 @@ export const BaselineFlow: React.FC<BaselineFlowProps> = ({ currentUser, onCompl
         totalSteps={4}
         title={getStepTitle()}
         hideProgress={!isTestingStage}
-        onHome={onExit}
+        onHome={handleSkipBaseline}
         onPause={() => setIsPaused(true)}
         onOpenAccessibility={() => setIsAccessibilityOpen(true)}
         onOpenGamification={() => setIsFamilyModalOpen(true)}
@@ -204,7 +221,10 @@ export const BaselineFlow: React.FC<BaselineFlowProps> = ({ currentUser, onCompl
         role="main"
       >
         {stage === 'intro' && (
-          <OnboardingIntro onStart={() => setStage('test1')} />
+          <OnboardingIntro
+            onStart={() => setStage('test1')}
+            onSkip={handleSkipBaseline}
+          />
         )}
 
         {stage === 'test1' && (

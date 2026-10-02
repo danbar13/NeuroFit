@@ -44,10 +44,13 @@ export function App() {
   const [isAdmin, setIsAdmin] = useState<boolean>(() => adminUserService.isAdminSessionActive());
 
   // Strict Gatekeeper logic:
-  // 1. If no authenticated user -> force 'auth'
-  // 2. If authenticated user has NO baseline profile -> force 'baseline_test'
-  // 3. Otherwise allow standard navigation
+  // 1. If in admin view -> allow admin auth guard to handle access
+  // 2. If no authenticated user -> force 'auth'
+  // 3. If authenticated user has NO baseline profile -> force 'baseline_test'
+  // 4. Otherwise allow standard navigation
   useEffect(() => {
+    if (currentView === 'admin') return;
+
     if (!currentUser) {
       setCurrentView('auth');
       return;
@@ -57,18 +60,22 @@ export function App() {
     if (!profile || !profile.last_assessed_at) {
       setCurrentView('baseline_test');
     }
-  }, [currentUser]);
+  }, [currentUser, currentView]);
 
   // URL hash sync (e.g. #admin directly navigates to CMS, #settings to settings)
   useEffect(() => {
     const handleHash = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'admin') {
+        setCurrentView('admin');
+        return;
+      }
+
       if (!currentUser) return;
       const profile = getCognitiveProfile(currentUser.user_id);
       if (!profile || !profile.last_assessed_at) return;
 
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'admin') setCurrentView('admin');
-      else if (hash === 'settings') setCurrentView('settings');
+      if (hash === 'settings') setCurrentView('settings');
       else if (hash === 'family') setCurrentView('family_dashboard');
       else if (hash === 'profile') setCurrentView('user_dashboard');
     };
@@ -78,20 +85,38 @@ export function App() {
   }, [currentUser]);
 
   // Handle user authentication / registration
-  const handleAuthenticated = async (newUser: UserProfile) => {
-    setCurrentUser(newUser);
-    setAppStateUser(newUser);
+  const handleAuthenticated = async (user: UserProfile, skipBaseline = false) => {
+    setCurrentUser(user);
+    setAppStateUser(user);
 
     try {
       const all = await adminUserService.getAllUsers();
-      if (!all.some((u) => u.user_id === newUser.user_id)) {
-        adminUserService.persistUsersLocally([newUser, ...all]);
+      if (!all.some((u) => u.user_id === user.user_id)) {
+        adminUserService.persistUsersLocally([user, ...all]);
       }
     } catch {
       // ignore
     }
 
-    const profile = getCognitiveProfile(newUser.user_id);
+    const profile = getCognitiveProfile(user.user_id);
+
+    if (skipBaseline) {
+      if (!profile || !profile.last_assessed_at) {
+        const defaultProfile: CognitiveProfile = {
+          user_id: user.user_id,
+          memory_level: 2,
+          attention_level: 2,
+          speed_level: 2,
+          language_level: 2,
+          baseline_completed: true,
+          last_assessed_at: new Date().toISOString(),
+        };
+        saveCognitiveProfile(defaultProfile);
+      }
+      setCurrentView('home');
+      return;
+    }
+
     if (!profile || !profile.last_assessed_at) {
       setCurrentView('baseline_test');
     } else {
@@ -128,8 +153,11 @@ export function App() {
       <GamificationProvider currentUser={currentUser}>
         <div className="min-h-screen w-full max-w-full overflow-x-hidden flex flex-col font-sans transition-colors duration-150">
           {/* 1. Unauthenticated Gate */}
-          {(!currentUser || currentView === 'auth') && (
-            <AuthScreen onAuthenticated={handleAuthenticated} />
+          {currentView !== 'admin' && (!currentUser || currentView === 'auth') && (
+            <AuthScreen
+              onAuthenticated={handleAuthenticated}
+              onOpenAdmin={() => setCurrentView('admin')}
+            />
           )}
 
           {/* 2. Mandatory Baseline Assessment Gate */}
@@ -234,17 +262,22 @@ export function App() {
               currentUser={currentUser}
               onReturnToHome={() => setCurrentView('home')}
               onLogout={handleLogout}
+              onOpenAdmin={() => setCurrentView('admin')}
             />
           )}
 
-          {currentUser && currentView === 'admin' && (
+          {currentView === 'admin' && (
             <AdminAuthGuard
               isAdmin={isAdmin}
               onToggleAdminRole={setIsAdmin}
               onReturnToApp={() => {
                 const refreshed = getCurrentUser();
-                if (refreshed) setAppStateUser(refreshed);
-                setCurrentView('home');
+                if (refreshed) {
+                  setAppStateUser(refreshed);
+                  setCurrentView('home');
+                } else {
+                  setCurrentView('auth');
+                }
               }}
             >
               <AdminDashboard
@@ -252,8 +285,12 @@ export function App() {
                 onToggleAdminRole={setIsAdmin}
                 onReturnToApp={() => {
                   const refreshed = getCurrentUser();
-                  if (refreshed) setAppStateUser(refreshed);
-                  setCurrentView('home');
+                  if (refreshed) {
+                    setAppStateUser(refreshed);
+                    setCurrentView('home');
+                  } else {
+                    setCurrentView('auth');
+                  }
                 }}
               />
             </AdminAuthGuard>

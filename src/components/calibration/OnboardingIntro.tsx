@@ -2,13 +2,14 @@ import React from 'react';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { audioManager } from '../../lib/soundEffects';
 import { baselineContentMatrix } from '../../data/baselineContentMatrix';
-import { Brain, Heart, CheckCircle2, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Brain, Heart, CheckCircle2, ShieldCheck, ArrowRight, FastForward } from 'lucide-react';
 
 interface OnboardingIntroProps {
   onStart: () => void;
+  onSkip?: () => void;
 }
 
-export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({ onStart }) => {
+export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({ onStart, onSkip }) => {
   const { theme, highContrast, soundEnabled, language, t } = useAccessibility();
 
   const matrixData = baselineContentMatrix[language].welcome_screen;
@@ -60,21 +61,43 @@ export const OnboardingIntro: React.FC<OnboardingIntroProps> = ({ onStart }) => 
         </ul>
       </div>
 
-      {/* Start Calibration Button from Matrix */}
-      <button
-        onClick={() => {
-          audioManager.playSuccess(soundEnabled);
-          onStart();
-        }}
-        className={`w-full max-w-md min-h-[72px] px-8 rounded-3xl font-extrabold text-2xl flex items-center justify-center gap-3 shadow-xl transition-transform active:scale-95 animate-pulse ${
-          highContrast
-            ? 'bg-yellow-400 text-black hover:bg-yellow-300 ring-4 ring-yellow-400/50'
-            : 'bg-blue-800 text-white hover:bg-blue-900 ring-4 ring-blue-600/30'
-        }`}
-      >
-        <span>{matrixData.start_button}</span>
-        <ArrowRight className="w-7 h-7 rtl:rotate-180" />
-      </button>
+      {/* Action Buttons: Start or Skip */}
+      <div className="w-full max-w-md flex flex-col items-center gap-3">
+        <button
+          onClick={() => {
+            audioManager.playSuccess(soundEnabled);
+            onStart();
+          }}
+          className={`w-full min-h-[64px] px-8 rounded-3xl font-extrabold text-xl sm:text-2xl flex items-center justify-center gap-3 shadow-xl transition-transform active:scale-95 animate-pulse cursor-pointer ${
+            highContrast
+              ? 'bg-yellow-400 text-black hover:bg-yellow-300 ring-4 ring-yellow-400/50'
+              : 'bg-blue-800 text-white hover:bg-blue-900 ring-4 ring-blue-600/30'
+          }`}
+        >
+          <span>{matrixData.start_button}</span>
+          <ArrowRight className="w-7 h-7 rtl:rotate-180" />
+        </button>
+
+        {onSkip && (
+          <button
+            type="button"
+            onClick={() => {
+              audioManager.playTap(soundEnabled);
+              onSkip();
+            }}
+            className={`w-full py-3.5 px-4 rounded-2xl text-base font-bold flex items-center justify-center gap-2 border-2 transition-all cursor-pointer ${
+              highContrast
+                ? 'border-yellow-400 text-yellow-300 hover:bg-yellow-400/20'
+                : theme === 'dark'
+                ? 'border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700 hover:border-slate-600'
+                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <FastForward className="w-5 h-5 rtl:rotate-180 text-blue-500" />
+            <span>{language === 'he' ? 'דלג על מבדק הכיול והמשך ישירות לדף הבית' : 'Skip calibration & continue to dashboard'}</span>
+          </button>
+        )}
+      </div>
 
       <div className="flex items-center gap-2 mt-6 text-sm opacity-70">
         <ShieldCheck className="w-5 h-5" />

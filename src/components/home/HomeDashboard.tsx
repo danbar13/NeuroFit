@@ -24,6 +24,7 @@ import {
   CheckCircle,
   Trophy,
   Settings as SettingsIcon,
+  Shield,
 } from 'lucide-react';
 
 interface HomeDashboardProps {
@@ -101,6 +102,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         onOpenAccessibility={() => setIsAccessibilityOpen(true)}
         onOpenGamification={handleOpenFamily}
         onOpenSettings={onOpenSettings}
+        onOpenAdmin={onOpenAdmin}
       />
 
       {/* 2. Main Content */}
@@ -128,7 +130,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             </p>
           </div>
 
-          {/* Action Buttons: Profile & Badges + Settings */}
+          {/* Action Buttons: Profile & Badges + Settings + Admin */}
           <div className="flex flex-wrap items-center justify-center gap-2.5 shrink-0 self-center sm:self-auto">
             {onOpenUserDashboard && (
               <button
@@ -164,6 +166,26 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                 <SettingsIcon className="w-5 h-5 shrink-0" />
                 <span className="hidden sm:inline">
                   {language === 'he' ? 'הגדרות' : 'Settings'}
+                </span>
+              </button>
+            )}
+
+            {onOpenAdmin && (
+              <button
+                onClick={onOpenAdmin}
+                aria-label={language === 'he' ? 'ניהול מערכת ומשתמשים' : 'Admin & Users Portal'}
+                title={language === 'he' ? 'ניהול מערכת ומשתמשים' : 'Admin & Users Portal'}
+                className={`px-4 sm:px-5 py-3.5 rounded-2xl border-2 font-black text-base flex items-center justify-center gap-2 transition-all transform active:scale-95 cursor-pointer shadow-sm ${
+                  highContrast
+                    ? 'border-yellow-400 text-yellow-300 hover:bg-yellow-400/20'
+                    : theme === 'dark'
+                    ? 'border-indigo-600/70 bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900/60'
+                    : 'border-indigo-400 bg-indigo-50 text-indigo-900 hover:bg-indigo-100'
+                }`}
+              >
+                <Shield className="w-5 h-5 text-indigo-400 shrink-0" />
+                <span>
+                  {language === 'he' ? 'ניהול מערכת' : 'Admin'}
                 </span>
               </button>
             )}

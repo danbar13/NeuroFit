@@ -24,18 +24,21 @@ import {
   Check,
   ShieldCheck,
   Home,
+  Shield,
 } from 'lucide-react';
 
 interface SettingsScreenProps {
   currentUser?: UserProfile | null;
   onReturnToHome: () => void;
   onLogout?: () => void;
+  onOpenAdmin?: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   currentUser,
   onReturnToHome,
   onLogout,
+  onOpenAdmin,
 }) => {
   const {
     fontSizeMultiplier,
@@ -763,8 +766,31 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </div>
         </section>
 
+        {/* SECTION: ADMIN PORTAL SHORTCUT */}
+        {onOpenAdmin && (
+          <section className="w-full pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                audioManager.playTap(soundEnabled);
+                onOpenAdmin();
+              }}
+              className={`w-full min-h-[56px] py-3.5 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 border-2 transition-all transform active:scale-[0.98] cursor-pointer shadow-sm ${
+                highContrast
+                  ? 'bg-black text-yellow-400 border-yellow-400 hover:bg-yellow-400/15'
+                  : theme === 'dark'
+                  ? 'bg-indigo-950/60 border-indigo-700/60 text-indigo-300 hover:bg-indigo-900/60'
+                  : 'bg-indigo-50 border-indigo-300 text-indigo-900 hover:bg-indigo-100'
+              }`}
+            >
+              <Shield className="w-5 h-5 shrink-0 text-indigo-400" />
+              <span>{language === 'he' ? 'ניהול מערכת ומשתמשים (Admin Portal)' : 'Admin & Users Portal (CMS)'}</span>
+            </button>
+          </section>
+        )}
+
         {/* SECTION 4: LOGOUT BUTTON (GENTLE WARNING COLOR, SENIOR-FRIENDLY) */}
-        <section className="w-full pt-4">
+        <section className="w-full pt-2">
           <button
             type="button"
             onClick={() => {

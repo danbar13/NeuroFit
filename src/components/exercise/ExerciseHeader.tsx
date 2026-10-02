@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pause, Eye, Sun, Moon, Zap, Settings as SettingsIcon, Home, Brain } from 'lucide-react';
+import { Pause, Eye, Sun, Moon, Zap, Settings as SettingsIcon, Home, Brain, Shield } from 'lucide-react';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { audioManager } from '../../lib/soundEffects';
 import { FlagIcon } from '../common/FlagIcon';
@@ -16,6 +16,7 @@ interface ExerciseHeaderProps {
   onOpenAccessibility: () => void;
   onOpenGamification?: () => void;
   onOpenSettings?: () => void;
+  onOpenAdmin?: () => void;
   title?: string;
   hideProgress?: boolean;
 }
@@ -29,6 +30,7 @@ export const ExerciseHeader: React.FC<ExerciseHeaderProps> = ({
   onOpenAccessibility,
   onOpenGamification,
   onOpenSettings,
+  onOpenAdmin,
   title,
   hideProgress = false,
 }) => {
@@ -275,6 +277,28 @@ export const ExerciseHeader: React.FC<ExerciseHeaderProps> = ({
               }`}
             >
               <SettingsIcon className="w-5 h-5 sm:w-7 sm:h-7 shrink-0" />
+            </button>
+          )}
+
+          {/* Admin Screen Trigger - Only when onOpenAdmin provided */}
+          {onOpenAdmin && (
+            <button
+              onClick={() => {
+                audioManager.playTap(soundEnabled);
+                onOpenAdmin();
+              }}
+              aria-label={language === 'he' ? 'כניסת מנהל מערכת' : 'Admin Portal'}
+              title={language === 'he' ? 'כניסת מנהל מערכת (Admin)' : 'Admin Portal'}
+              className={`w-11 h-11 sm:w-auto sm:min-w-[64px] min-h-[44px] sm:min-h-[64px] p-2 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center font-bold gap-1.5 border-2 transition-transform active:scale-95 shrink-0 cursor-pointer ${
+                highContrast
+                  ? 'bg-black text-yellow-400 border-yellow-400 hover:bg-yellow-400/20'
+                  : theme === 'dark'
+                  ? 'bg-indigo-950/70 text-indigo-300 border-indigo-700/60 hover:bg-indigo-900/70 shadow-sm'
+                  : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 shadow-sm'
+              }`}
+            >
+              <Shield className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 text-indigo-400" />
+              <span className="hidden xl:inline text-sm font-black">{language === 'he' ? 'ניהול' : 'Admin'}</span>
             </button>
           )}
         </div>

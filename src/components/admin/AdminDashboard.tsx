@@ -4,23 +4,25 @@ import type {
   ExerciseDictionaryEntry,
 } from '../../types/database';
 import { exerciseDictionaryService } from '../../lib/exerciseDictionaryService';
+import { adminUserService } from '../../lib/adminUserService';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { ContentForm } from './ContentForm';
 import { ContentDataGrid } from './ContentDataGrid';
+import { UserManager } from './UserManager';
 import {
   BookOpen,
   Search,
   Zap,
   Brain,
   Database,
-  Shield,
-  ShieldAlert,
   Download,
   Upload,
   RefreshCw,
   CheckCircle,
   Plus,
   Home,
+  Users,
+  LogOut,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -31,11 +33,12 @@ interface AdminDashboardProps {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onReturnToApp,
-  isAdmin,
+  isAdmin: _isAdmin,
   onToggleAdminRole,
 }) => {
-  const [activeTab, setActiveTab] = useState<ExerciseDictionaryCategory | 'overview'>('language');
+  const [activeTab, setActiveTab] = useState<ExerciseDictionaryCategory | 'overview' | 'users'>('users');
   const [entries, setEntries] = useState<ExerciseDictionaryEntry[]>([]);
+  const [usersCount, setUsersCount] = useState<number>(0);
   const [editingEntry, setEditingEntry] = useState<ExerciseDictionaryEntry | null>(null);
   const [showAddForm, setShowAddForm] = useState<boolean>(true);
   const [_isLoading, setIsLoading] = useState<boolean>(false);
@@ -49,10 +52,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const all = await exerciseDictionaryService.getAll();
+      const [all, allUsers] = await Promise.all([
+        exerciseDictionaryService.getAll(),
+        adminUserService.getAllUsers(),
+      ]);
       setEntries(all);
+      setUsersCount(allUsers.length);
     } catch (err: any) {
-      setFeedbackMessage({ text: 'שגיאה בטעינת נתונים: ' + err.message, type: 'error' });
+      setFeedbackMessage({ text: 'שגיאה בטעינת נתונים: ' + (err?.message || 'שגיאה בלתי צפויה'), type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -138,10 +145,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Filter entries for current active category
   const currentCategoryEntries =
-    activeTab === 'overview' ? entries : entries.filter((e) => e.category === activeTab);
+    activeTab === 'overview' || activeTab === 'users' ? entries : entries.filter((e) => e.category === activeTab);
 
   // Tab definitions
   const tabs = [
+    { id: 'users' as const, label: 'ניהול משתמשים (User Management)', icon: Users, count: usersCount },
     { id: 'language' as const, label: 'חשיבה מילולית (Language)', icon: BookOpen, count: entries.filter(e => e.category === 'language').length },
     { id: 'attention' as const, label: 'קשב וסריקה (Visual Search)', icon: Search, count: entries.filter(e => e.category === 'attention').length },
     { id: 'speed' as const, label: 'מהירות תגובה (Processing Speed)', icon: Zap, count: entries.filter(e => e.category === 'speed').length },
@@ -165,7 +173,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   Admin Panel v1.0
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">ניהול תכנים, הזרקת תרגילים והגדרות DDA</p>
+              <p className="text-[11px] text-slate-400">ניהול משתמשים, הזרקת תרגילים והגדרות DDA</p>
             </div>
           </div>
 
@@ -182,23 +190,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <span>{supabaseReady ? 'Supabase Live' : 'Local Storage Mode'}</span>
             </div>
 
-            {/* Admin Role Toggle (Simulator) */}
+            {/* Logout Admin Button */}
             <button
-              onClick={() => onToggleAdminRole(!isAdmin)}
-              title="לחצו לבדיקת Auth Guard (החלפה בין מנהל למשתמש רגיל)"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition-colors"
+              onClick={() => {
+                adminUserService.setAdminSession(false);
+                onToggleAdminRole(false);
+                onReturnToApp();
+              }}
+              title="נעילת הרשאת מנהל ויציאה"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-950/60 hover:bg-rose-900 border border-rose-700/50 text-rose-200 transition-colors cursor-pointer"
             >
-              {isAdmin ? (
-                <>
-                  <Shield className="w-3.5 h-3.5 text-indigo-400" />
-                  <span className="hidden md:inline">הרשאה: מנהל</span>
-                </>
-              ) : (
-                <>
-                  <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
-                  <span className="hidden md:inline">משתמש רגיל</span>
-                </>
-              )}
+              <LogOut className="w-3.5 h-3.5" />
+              <span>נעילת מנהל</span>
             </button>
 
             {/* Return to Main App */}
@@ -297,7 +300,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Main Content Area */}
         <main className="flex-1 min-w-0">
-          {activeTab === 'overview' ? (
+          {activeTab === 'users' ? (
+            <UserManager
+              onUserSwitched={() => {
+                onReturnToApp();
+              }}
+              onNotification={(text, type) => showNotification(text, type)}
+            />
+          ) : activeTab === 'overview' ? (
             /* System Overview Tab */
             <div className="space-y-6">
               <div className="bg-slate-800/90 border border-slate-700 rounded-xl p-6 shadow-lg">

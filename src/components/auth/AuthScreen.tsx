@@ -63,14 +63,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
         totalSteps={1}
         hideProgress={true}
         title={language === 'he' ? 'ברוכים הבאים' : 'Welcome'}
-        onPause={() => {}}
         onOpenAccessibility={() => setIsAccessibilityOpen(true)}
       />
 
       {/* 2. Main Content Card */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
+      <div className="flex-1 flex items-center justify-center p-3 sm:p-6 w-full">
         <div
-          className={`w-full max-w-lg p-8 sm:p-10 rounded-3xl shadow-2xl border transition-all ${
+          className={`w-full max-w-lg p-5 sm:p-10 rounded-3xl shadow-2xl border transition-all ${
             highContrast
               ? 'bg-black border-4 border-yellow-400'
               : theme === 'dark'

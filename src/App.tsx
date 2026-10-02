@@ -23,6 +23,7 @@ import {
 import type { UserProfile, CognitiveProfile } from './types/database';
 import type { ExerciseCategory } from './types/exercise';
 import type { CalibrationSummary } from './lib/calibrationEngine';
+import { adminUserService } from './lib/adminUserService';
 
 export type AppView =
   | 'auth'
@@ -40,7 +41,7 @@ export function App() {
   const [currentUser, setAppStateUser] = useState<UserProfile | null>(getCurrentUser);
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [selectedSoloGame, setSelectedSoloGame] = useState<{ id: string; category: ExerciseCategory } | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(true);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => adminUserService.isAdminSessionActive());
 
   // Strict Gatekeeper logic:
   // 1. If no authenticated user -> force 'auth'
@@ -77,9 +78,18 @@ export function App() {
   }, [currentUser]);
 
   // Handle user authentication / registration
-  const handleAuthenticated = (newUser: UserProfile) => {
+  const handleAuthenticated = async (newUser: UserProfile) => {
     setCurrentUser(newUser);
     setAppStateUser(newUser);
+
+    try {
+      const all = await adminUserService.getAllUsers();
+      if (!all.some((u) => u.user_id === newUser.user_id)) {
+        adminUserService.persistUsersLocally([newUser, ...all]);
+      }
+    } catch {
+      // ignore
+    }
 
     const profile = getCognitiveProfile(newUser.user_id);
     if (!profile || !profile.last_assessed_at) {
@@ -116,7 +126,7 @@ export function App() {
   return (
     <AccessibilityProvider>
       <GamificationProvider currentUser={currentUser}>
-        <div className="min-h-screen w-full flex flex-col font-sans transition-colors duration-150">
+        <div className="min-h-screen w-full max-w-full overflow-x-hidden flex flex-col font-sans transition-colors duration-150">
           {/* 1. Unauthenticated Gate */}
           {(!currentUser || currentView === 'auth') && (
             <AuthScreen onAuthenticated={handleAuthenticated} />
@@ -231,12 +241,20 @@ export function App() {
             <AdminAuthGuard
               isAdmin={isAdmin}
               onToggleAdminRole={setIsAdmin}
-              onReturnToApp={() => setCurrentView('home')}
+              onReturnToApp={() => {
+                const refreshed = getCurrentUser();
+                if (refreshed) setAppStateUser(refreshed);
+                setCurrentView('home');
+              }}
             >
               <AdminDashboard
                 isAdmin={isAdmin}
                 onToggleAdminRole={setIsAdmin}
-                onReturnToApp={() => setCurrentView('home')}
+                onReturnToApp={() => {
+                  const refreshed = getCurrentUser();
+                  if (refreshed) setAppStateUser(refreshed);
+                  setCurrentView('home');
+                }}
               />
             </AdminAuthGuard>
           )}

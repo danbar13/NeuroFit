@@ -12,15 +12,21 @@
   html {
     font-size: calc(16px * var(--font-scale, 1.25));
     -webkit-tap-highlight-color: transparent;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   body {
     margin: 0;
     padding: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    position: relative;
     min-height: 100vh;
     min-height: 100dvh;
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #090d16;
+    color: #f1f5f9;
     line-height: 1.6;
     letter-spacing: 0.015em;
     user-select: none;
@@ -28,10 +34,24 @@
     transition: background-color 0.2s ease, color 0.2s ease;
   }
 
+  /* Light mode override when explicitly switched */
+  html.light body {
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+
   /* Dark mode global overrides */
   html.dark body {
     background-color: #090d16;
     color: #f1f5f9;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   /* High contrast global overrides (Yellow on Black) */

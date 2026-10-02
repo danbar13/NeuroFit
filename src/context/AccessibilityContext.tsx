@@ -7,7 +7,7 @@ const STORAGE_KEY = 'neurofit_accessibility_settings_v2';
 
 const DEFAULT_STATE = {
   fontSizeMultiplier: 1.25 as FontSizeOption,
-  theme: 'light' as DisplayTheme,
+  theme: 'dark' as DisplayTheme,
   reduceAnimations: false,
   soundEnabled: true,
   language: 'he' as Language,
@@ -34,17 +34,18 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   const [theme, setThemeState] = useState<DisplayTheme>(() => {
+    // Requirements: "בכניסה לאפליקציה - תמיד במצב כהה."
+    // Every entry/launch into the app starts in dark mode.
+    // Within the same active tab session, remember the user's manual switch.
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.theme) return parsed.theme;
-        if (parsed.highContrast) return 'high-contrast';
+      const activeSessionTheme = sessionStorage.getItem('neurofit_active_theme');
+      if (activeSessionTheme === 'light' || activeSessionTheme === 'dark' || activeSessionTheme === 'high-contrast') {
+        return activeSessionTheme as DisplayTheme;
       }
     } catch {
       // fallback
     }
-    return DEFAULT_STATE.theme;
+    return 'dark';
   });
 
   const [language, setLanguageState] = useState<Language>(() => {
@@ -109,6 +110,7 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Persist to local storage and sync to Accessibility_Settings in database
     try {
+      sessionStorage.setItem('neurofit_active_theme', theme);
       localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({

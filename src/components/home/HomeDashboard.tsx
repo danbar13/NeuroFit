@@ -336,7 +336,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         {onOpenCatalog && (
           <div
             onClick={onOpenCatalog}
-            className={`w-full p-5 rounded-2xl border-2 flex items-center justify-between cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] shadow-sm mb-4 ${
+            className={`w-full p-4 sm:p-5 rounded-2xl border-2 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] shadow-sm mb-4 gap-3 ${
               highContrast
                 ? 'bg-black text-yellow-300 border-yellow-400'
                 : theme === 'dark'
@@ -344,18 +344,18 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                 : 'bg-white border-slate-200 hover:border-primary-400'
             }`}
           >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
                 <Sparkles className="w-6 h-6" />
               </div>
-              <div>
-                <span className="font-extrabold text-lg block flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <span className="font-extrabold text-base sm:text-lg block flex flex-wrap items-center gap-2">
                   <span>{language === 'he' ? 'ספריית המשחקים המדעית' : 'Scientific Game Catalog'}</span>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-950 text-primary-700 dark:text-primary-300 font-black">
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-950 text-primary-700 dark:text-primary-300 font-black shrink-0">
                     40 {language === 'he' ? 'משחקים' : 'Games'}
                   </span>
                 </span>
-                <span className="text-sm opacity-80 font-medium">
+                <span className="text-xs sm:text-sm opacity-80 font-medium block mt-0.5 leading-snug">
                   {language === 'he'
                     ? '10 משחקים מדעיים ייחודיים בכל תחום (סטרופ, שבילים, דיג\'יט ספאן, אנלוגיות ועוד)'
                     : '10 distinct paradigms per domain (Stroop, TMT, Digit Span, Analogies, etc.)'}
@@ -363,7 +363,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0 self-end sm:self-auto">
               <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
                 {language === 'he' ? 'לכל המשחקים' : 'Explore'}
               </span>
@@ -375,7 +375,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         {/* 5. Family Brain Club Preview Card */}
         <div
           onClick={handleOpenFamily}
-          className={`w-full p-5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] shadow-sm ${
+          className={`w-full p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] shadow-sm gap-3 ${
             highContrast
               ? 'bg-black text-yellow-300 border-yellow-400'
               : theme === 'dark'
@@ -383,15 +383,15 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               : 'bg-white border-slate-200'
           }`}
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
               <Users className="w-6 h-6" />
             </div>
-            <div>
-              <span className="font-extrabold text-lg block">
+            <div className="min-w-0 flex-1">
+              <span className="font-extrabold text-base sm:text-lg block truncate">
                 {language === 'he' ? 'מועדון המוח של משפחת ברקאי' : 'Barkai Family Brain Club'}
               </span>
-              <span className="text-sm opacity-80 font-medium">
+              <span className="text-xs sm:text-sm opacity-80 font-medium block mt-0.5 leading-snug">
                 {language === 'he'
                   ? `יעד שבועי: ${weeklyCoins} מתוך ${weeklyGoal} 🪙 • לחצו לצפייה ועידוד`
                   : `Weekly Goal: ${weeklyCoins} of ${weeklyGoal} 🪙 • Click to cheer`}
@@ -399,7 +399,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0 self-end sm:self-auto">
             <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
               {language === 'he' ? 'פתיחה' : 'Open'}
             </span>
@@ -415,7 +415,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-800/40 transition-colors"
             >
               <span>🛠️</span>
-              <span>{language === 'he' ? 'ניהול תוכן למנהלים (CMS Admin)' : 'CMS Admin Panel'}</span>
+              <span>{language === 'he' ? 'ניהול מערכת ומשתמשים (Admin Portal)' : 'Admin & Users Portal'}</span>
             </button>
           </div>
         )}
